@@ -5,80 +5,31 @@
 #define w1 11
 #define w2 41
 using namespace std;
+#include "header.h"
 
-class Kasir
-{
-    private:
-     string container; //* ini variabel untuk menampung line dari database.txt
-     string arrayData[4]; //* variabel array untuk nyimpan isi container
-     string id; //* sebagai identitas data atau array
-     string metodePembayaran = "Cash"; //! reassign menggunakan constructor
-     size_t pos = 0; 
-     int pilihan;   
-     int jumlah;          
-     int size;
-     bool ditemukan = false;
-    public:
-        Kasir()
-        {
-        }
-        ~Kasir()
-        {
-        }
-        //* method
-        void tampilkan(); 
-        void tambah();
-        void kurang();
-        void hapus();
-        void filter();
-        void checkout();
-        void gantiMetode() //! Pemngembangan
-        {
-          cout << "Metode tersedia:" << endl << "1. cash" << endl << "2. Transfer Bank (BRI)" << endl << "3. Dompet Virtual (OVO)" << endl;
-          cin >> pilihan;
-
-          if (pilihan == 1) metodePembayaran = "Cash";
-          else if (pilihan == 2) metodePembayaran = "Transfer Bank (0000 1111 2222 3333)";
-          else if (pilihan == 3) metodePembayaran = "Dompet Virtual (0812 3456 789)";
-          else {cout << "Masukkan pilihan yang valid"; gantiMetode();}
-          
-        }
-
-        //* usable function
-        void head();
-        void menu();
-        void parse()
-        {
-          for (this->size = 0; (pos = container.find('|')) != string::npos;size++)
-          {
-               arrayData[size] = container.substr(0, pos + 1);
-               container.erase(0, pos + 1);
-          }
-        }
-        int to_int(string s)
+//* GLOBAL
+int to_int(string s)
         {
                int result = 0;
                for (size_t i = 0; i < s.length(); i++)
                {
-                    //! jika input bukan angka di [0], coba throw error/exception (try/catch)
                     if (s[i] < '0' || s[i] > '9') return result;
                     result =  result * 10 + (s[i] - '0');
                } 
                
                return result;
-               //?apakah result ini sudah tepat dideklarasikan dalam fungsi
         }
-};
 
+
+//* PARENT
 void Kasir::head()
 {
      cout << '+' << setfill('-')  << setw(w1) << '+' << setw(w2) << '+' << setw(w2) << '+' << endl;
      cout << '|' << setfill(' ') << setw(w1) << "ID|" << setw(w2) << "Nama Barang|" << setw(w2) << "Harga|" << endl;
      cout << '+' << setfill('-')  << setw(w1) << '+' << setw(w2) << '+'<< setw(w2) << '+' << endl;
-
 }
 
-void Kasir::menu() //? mengapa void::menu berhasil alih alih void Kasir::menu
+void Kasir::menu() 
 {
      
      cout << '+' << setfill('-')  << setw(w1) << '+' << setw(w2) << '+'<< setw(w2) << '+' << endl;
@@ -90,68 +41,97 @@ void Kasir::menu() //? mengapa void::menu berhasil alih alih void Kasir::menu
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
      cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Filter Barang (4)|" << endl;
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
-     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "CheckOut Barang (5)|" << endl;
+     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Keranjang & CheckOut (5)|" << endl;
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
+}
+
+void Kasir::parse()
+{
+     //p0005|Rok|26000|2|
+     for (this->size = 0; (pos = container.find('|')) != string::npos;size++)
+     {
+          arrayData[size] = container.substr(0, pos + 1);
+          container.erase(0, pos + 1);
+     }
 }
 
 void Kasir::tampilkan()
 {
      system ("cls");
-     ifstream data("database.txt");
+     ifstream file(namaFile);
      head();
-     while(getline(data, container))
+     while(getline(file, container))
      {
           parse();
           cout << '|' << setfill(' ') << setw(w1) << arrayData[0]
                                       << setw(w2) << arrayData[1] 
                                       << setw(w2) << arrayData[2] << endl;
      }
-     menu();
-     data.close();
-
-     cout << "\nMasukkan pilihan: ";
-     cin >> pilihan;
-
-     switch (pilihan)
-     {
-     case 1:    
-          cout << "masukkan ID barang: ";
-          cin >> id;          
-          tambah();
-          break;
-     case 2:
-          cout << "masukkan ID barang yang ingin dihapus: ";
-          cin >> id;
-          hapus();
-          break;
-     case 3:
-          cout << "masukkan ID barang yang ingin dihapus: ";
-          cin >> id;
-          kurang();
-          break;
-     case 4:  
-          cout << "Filter Berdasarkan: " << endl;
-          cout << "1. Barang" << endl << "2. Makanan" << endl << "3. Pakaian" << endl;
-          cout << "Pilihan: ";
-          cin >> pilihan;
-          if (pilihan == 1) pilihan = 'b'; //*pilihannya diwakili huruf biar ga ribet dibawah
-          if (pilihan == 2) pilihan = 'm';
-          if (pilihan == 3) pilihan = 'p';
-          filter();
-          break;
-     case 5:
-          checkout(); 
-          break;  
-   
-     default:
-          tampilkan();
-          cout << "Masukkan angka yang valid";
-          break;
-     }
+     file.close();
 }
 
-void Kasir::tambah()
-{    
+
+//*CHILD1
+void Produk::tampilkan()
+{
+     Kasir::tampilkan();
+     menu();
+}
+
+void Produk::filter()
+{
+     cout << "Filter Berdasarkan: " << endl;
+     cout << "1. Barang" << endl << "2. Makanan" << endl << "3. Pakaian" << endl;
+     cout << "Pilihan: ";
+     cin >> pilihan;
+     if (pilihan == 1) pilihan = 'b'; //*pilihannya diwakili huruf biar ga ribet dibawah
+     if (pilihan == 2) pilihan = 'm';
+     if (pilihan == 3) pilihan = 'p';
+
+     system("cls");
+
+     ifstream data("database.txt");
+     head();
+     while (getline(data, container))
+     {
+          parse();
+          container = arrayData[0]; //* mengubah elemen (cth: "lost") menjadi array ('l', 'o', 's', 't') 
+          if (container[0] == pilihan) cout << '|' << setfill(' ') << setw(w1) << arrayData[0] //* kalau huruf awal id = pilihan, dia diprint
+                                                                   << setw(w2) << arrayData[1] 
+                                                                   << setw(w2) << arrayData[2] << endl;
+     }
+     data.close();
+     menu();
+}
+
+
+//*CHILD2 
+void Keranjang::head()
+{
+     cout << setfill(' ') << setw(w1+5) << '|' << setw(w1) << "ID|" << setw(w2-20) << "Nama Barang|" << setw(w2-15) << "Jumlah|" << endl;
+     cout << setw(w1+5) << '+' << setfill('-')  << setw(w1) << '+' << setw(w2-20) << '+'<< setw(w2-15) << '+' << endl;
+}
+
+void Keranjang::tampilkan()
+{
+     ifstream file(namaFile);
+     head();
+     while(getline(file, container))
+     {
+          parse();
+          cout << setw(w1+5) << setfill(' ') << '|'  << setw(w1) << arrayData[0]
+                                      << setw(w2-20) << arrayData[1] 
+                                      << setw(w2-15) << arrayData[3] << endl;
+     }
+     file.close();
+
+     cout << setw(w1+5) << '|' << setfill('-') << setw(w1) << "+" << setw(w2+6) << "+" << endl;
+     cout << setw(w1+5) << setfill(' ') << '|'  << setw(w1) << "Tutup Keranjang (6)|" << setw(w2-3) << "CheckOut (7)|" << endl;
+     cout << setw(w1+5) << '+' << setfill('-') << setw(w2+w1+6) << "+" << endl;
+}
+
+void Keranjang::tambah()
+{
      jumlah = 0;
      ditemukan = false;
      ifstream keranjang("keranjang.txt");
@@ -195,7 +175,7 @@ void Kasir::tambah()
      }
 }
 
-void Kasir::kurang()
+void Keranjang::kurang()
 {
      ditemukan = false;
      jumlah = 0;
@@ -232,11 +212,10 @@ void Kasir::kurang()
      for (int i = 0; i < size; i++) keranjangOut << arrayData[i];
      keranjangOut << endl;
      keranjangOut.close();
-
 }
 
-void Kasir::hapus()
-{   
+void Keranjang::hapus()
+{
      ofstream temp("temp.txt", ios::app);
      ifstream keranjang("keranjang.txt");
 
@@ -251,31 +230,26 @@ void Kasir::hapus()
 
      remove("keranjang.txt");
      rename("temp.txt", "keranjang.txt");
-
-     // if(remove("keranjang.txt") != 0) {perror ("Gagal menghapus file keranjang.txt"); return;}
-     // else {rename("temp.txt", "keranjang.txt");cout<<"Keranjang berhasil dihapus dan direname"; return;}
-
 }
 
-void Kasir::filter()
+//*CHILD#
+void Transaksi::head()
 {
-     system("cls");
-
-     ifstream data("database.txt");
-     head();
-     while (getline(data, container))
-     {
-          parse();
-          container = arrayData[0]; //* mengubah elemen (cth: "lost") menjadi array ('l', 'o', 's', 't') 
-          if (container[0] == pilihan) cout << '|' << setfill(' ') << setw(w1) << arrayData[0] //* kalau huruf awal id = pilihan, dia diprint
-                                                                   << setw(w2) << arrayData[1] 
-                                                                   << setw(w2) << arrayData[2] << endl;
-     }
-     data.close();
-     menu();
+     Kasir::head();
 }
 
-void Kasir::checkout()
+void Transaksi::gantiMetode()
+{
+          cout << "Metode tersedia:" << endl << "1. cash" << endl << "2. Transfer Bank (BRI)" << endl << "3. Dompet Virtual (OVO)" << endl;
+          cin >> pilihan;
+
+          if (pilihan == 1) metodePembayaran = "Cash";
+          else if (pilihan == 2) metodePembayaran = "Transfer Bank (0000 1111 2222 3333)";
+          else if (pilihan == 3) metodePembayaran = "Dompet Virtual (0812 3456 789)";
+          else {cout << "Masukkan pilihan yang valid"; gantiMetode();}
+}
+
+void Transaksi::checkout()
 {
      system ("cls");
 
@@ -307,10 +281,9 @@ void Kasir::checkout()
      cout << '|' << setw (w1 + w2*2) << "|" << endl;  
      cout << '+' << setfill('-') << setw (w1 + w2*2) << '+' << endl;
 
-     cout << "Total: " << jumlah; //*Debugger sementara
          
-     // cout << "\nMasukkan pilihan: ";
-     // cin >> pilihan;
+     cout << "\nMasukkan pilihan: ";
+     cin >> pilihan;
 
      while (pilihan < 1 || pilihan > 3)
      {
@@ -324,21 +297,3 @@ void Kasir::checkout()
      else if (pilihan == 3)tampilkan (); //* +print struk, +bersihkan isi keranjang.txt
 }
 
-int main()
-{
-    Kasir Kasir1;
-    Kasir1.tampilkan();
-    return 0;
-}
-
-//TODO: jumlah Barang, total harga
-//TODO: Metode Pembayaran
-//TODO: Efisiensi Program
-//TODO: Sorting feature
-//TODO: Fitur Kembali
-//TODO: Struk
-
-//TODO: Coba pakai Try-Catch untuk menangkap error ketika salah menginput nilai
-
-//TODO: Perbaiki looping unlimited ketikka ctrl alt n saat input nilai
-//? jika ada fungsi yang bukan berperan sebagai method
