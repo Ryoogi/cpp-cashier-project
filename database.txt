@@ -1,0 +1,15 @@
+b0001|Bola|40000|
+b0002|Gitar|220000|
+b0003|Handphone|1200000|
+b0004|Headset|250000|
+b0005|Laptop|4500000|
+m0001|Apel|3000|
+m0002|Coklat|8000|
+m0003|Keripik|9000|
+m0004|Mie|2500|
+m0005|Roti|5000|
+p0001|Celana|35000|
+p0002|Hoodie|26000|
+p0003|Jaket|65000|
+p0004|Kaos|20000|
+p0005|Rok|26000|
