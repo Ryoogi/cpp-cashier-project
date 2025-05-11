@@ -9,17 +9,26 @@ using namespace std;
 class Kasir
 {
     private:
-     string container;
-     string arrayData[3];
-     string id;
-     string metodePembayaran = "Cash"; 
+     string container; //* ini variabel untuk menampung line dari database.txt
+     string arrayData[4]; //* variabel array untuk nyimpan isi container
+     string id; //* sebagai identitas data atau array
+     string metodePembayaran = "Cash"; //! reassign menggunakan constructor
      size_t pos = 0; 
-     int pilihan;
-     int jumlah = 0;
-     //?kapan mendeklarasikan variabel didalam fungsi?
+     int pilihan;   
+     int jumlah;          
+     int size;
+     bool ditemukan = false;
     public:
+        Kasir()
+        {
+        }
+        ~Kasir()
+        {
+        }
+        //* method
         void tampilkan(); 
         void tambah();
+        void kurang();
         void hapus();
         void filter();
         void checkout();
@@ -35,27 +44,29 @@ class Kasir
           
         }
 
+        //* usable function
         void head();
         void menu();
         void parse()
         {
-          for (int i = 0; (pos = container.find('|')) != string::npos; i++)
+          for (this->size = 0; (pos = container.find('|')) != string::npos;size++)
           {
-               arrayData[i] = container.substr(0, pos + 1);
+               arrayData[size] = container.substr(0, pos + 1);
                container.erase(0, pos + 1);
           }
         }
-        int cast(string s)
+        int to_int(string s)
         {
                int result = 0;
-               for (size_t i = 0; s[i] < s.length(); i++)
+               for (size_t i = 0; i < s.length(); i++)
                {
                     //! jika input bukan angka di [0], coba throw error/exception (try/catch)
-                    if (int(s[i]) < 48 || int(s[i] > 57)) return result;
-                    result = result * 10 + (s[i++] - '0');
+                    if (s[i] < '0' || s[i] > '9') return result;
+                    result =  result * 10 + (s[i] - '0');
                } 
                
                return result;
+               //?apakah result ini sudah tepat dideklarasikan dalam fungsi
         }
 };
 
@@ -67,7 +78,7 @@ void Kasir::head()
 
 }
 
-void Kasir::menu() 
+void Kasir::menu() //? mengapa void::menu berhasil alih alih void Kasir::menu
 {
      
      cout << '+' << setfill('-')  << setw(w1) << '+' << setw(w2) << '+'<< setw(w2) << '+' << endl;
@@ -75,17 +86,18 @@ void Kasir::menu()
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
      cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Hapus dari Keranjang (2)|" << endl;
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
-     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Filter Barang (3)|" << endl;
+     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Kurangi Barang (3)|" << endl;
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
-     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Check Out (4)|" << endl;
+     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "Filter Barang (4)|" << endl;
+     cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
+     cout << '|' << setfill(' ') << setw(w1 + w2*2) << "CheckOut Barang (5)|" << endl;
      cout << '+' << setfill('-') << setw(w1 + w2*2) << '+' << endl;
 }
 
 void Kasir::tampilkan()
 {
      system ("cls");
-     ifstream data("database.txt"); 
-    
+     ifstream data("database.txt");
      head();
      while(getline(data, container))
      {
@@ -95,102 +107,167 @@ void Kasir::tampilkan()
                                       << setw(w2) << arrayData[2] << endl;
      }
      menu();
+     data.close();
 
      cout << "\nMasukkan pilihan: ";
      cin >> pilihan;
 
-     while (pilihan < 1 && pilihan > 4)
+     switch (pilihan)
      {
-          cout << "Masukkan angka yang valid!" << endl;
-          cout << "Masukkan pilihan: ";
+     case 1:    
+          cout << "masukkan ID barang: ";
+          cin >> id;          
+          tambah();
+          break;
+     case 2:
+          cout << "masukkan ID barang yang ingin dihapus: ";
+          cin >> id;
+          hapus();
+          break;
+     case 3:
+          cout << "masukkan ID barang yang ingin dihapus: ";
+          cin >> id;
+          kurang();
+          break;
+     case 4:  
+          cout << "Filter Berdasarkan: " << endl;
+          cout << "1. Barang" << endl << "2. Makanan" << endl << "3. Pakaian" << endl;
+          cout << "Pilihan: ";
           cin >> pilihan;
+          if (pilihan == 1) pilihan = 'b'; //*pilihannya diwakili huruf biar ga ribet dibawah
+          if (pilihan == 2) pilihan = 'm';
+          if (pilihan == 3) pilihan = 'p';
+          filter();
+          break;
+     case 5:
+          checkout(); 
+          break;  
+   
+     default:
+          tampilkan();
+          cout << "Masukkan angka yang valid";
+          break;
      }
-     if (pilihan == 1) tambah(); //! bagus mana banding switch
-     if (pilihan == 2) hapus();
-     if (pilihan == 3) filter();
-     if (pilihan == 4) checkout();
-
- 
-     
-     data.close(); 
-     tampilkan();
 }
 
 void Kasir::tambah()
 {    
-     ifstream data("database.txt");
-     fstream keranjang("keranjang.txt", ios::app | ios::in);
-     cout << "masukkan ID barang: ";
-     cin >> id;
-
-     while(getline(data, container))
+     jumlah = 0;
+     ditemukan = false;
+     ifstream keranjang("keranjang.txt");
+     while(getline(keranjang, container)) //* mencari data dari keranjang, di keranjang ada data jumlah barang
      {
           if((pos = container.find(id)) == string::npos) continue;
-          else break;
+          else {ditemukan = true; break;}
      }  
-     parse();
-     cout << "Barang yang ingin ditambah: " << arrayData[1] << endl
-          << "Jumlah dalam keranjang: " << arrayData[3] << endl;
-     cout << "Tambah sebanyak: ";
+     keranjang.close();//* nutup file biar pointer internal reset, capek kena bug babi
+     
+     if (!ditemukan)//* jika tidak ada di keranjang, dia ambil dari database
+     {
+          ifstream data("database.txt");
+          while(getline(data, container)) //* mencari data dari database
+          {
+               if((pos = container.find(id)) == string::npos) continue;
+               else {ditemukan = true; break;}
+          }  
+          data.close();
+     }
+
+
+     if (ditemukan) //*setelah datanya diambil dari database/keranjang, jalankan fungsi tambah untuk ngupdate
+     {
+          
+          parse();
+          cout << "Barang yang ingin ditambah: " << arrayData[1] + "\b " << endl;
+          cout << "Tambah sebanyak: ";
+          cin >> jumlah; 
+          
+          if (size == 4) jumlah += to_int(arrayData[3]);//*mengupdate jumlah  
+          else if (size == 3) size++;   
+
+          arrayData[3] = to_string(jumlah) + '|';
+
+          hapus(); //* setelah jumlah diupdate, hapus datanya dari keranjang
+          ofstream keranjang("keranjang.txt", ios::app);
+          for (int i = 0; i < size; i++) keranjang << arrayData[i];//* print ulang data dan jumlah yang baru
+          keranjang << endl;
+          keranjang.close();
+     }
+}
+
+void Kasir::kurang()
+{
+     ditemukan = false;
+     jumlah = 0;
+     ifstream keranjangIn("keranjang.txt");//*cari datanya dari keranjang
+     while (getline(keranjangIn, container))
+     {
+          if((pos = container.find(id)) == string::npos) continue;
+          else {ditemukan = true; break;}
+     }
+     keranjangIn.close();
+     parse(); //* setelah data diambil, uraikan jadi array dengan parse
+
+     cout << "Ada " << arrayData[3] + "\b " << arrayData[1] + "\b " << "didalam keranjang." << endl
+          << "Kurangi sebanyak: "; //* minta berapa banyak yang ingin dikurangi
      cin >> jumlah;
-     jumlah = jumlah + cast(arrayData[3]); //* menambahkan jumlah yang diberi user dengan yang di keranjang
 
-     keranjang << container + to_string(jumlah) + '|' << endl;
+     if(jumlah < to_int(arrayData[3]) && jumlah > 0) //* jika jumlah yang ingin dikurangi lebih kecil dari jumlah di keranjang, jalankan
+     {
+          arrayData[3] = to_string(to_int(arrayData[3]) - jumlah) + '|';
+          if (to_int(arrayData[3]) == 0) //* jika setelah dikurangi, isi barang dikeranjang jadi 0, hapus aja
+          {
+               hapus();
+               return;
+          }
+     }
+     else //* kalau angkanya tidak valid, ulangi
+     {
+          system("cls");
+          cout << "\nMasukkan angka yang valid!" << endl;
+          kurang();
+     }
+     hapus(); //* setelah jumlah baru udh dapat, hapus data yang lama
+     ofstream keranjangOut("keranjang.txt", ios::app);//* print ke keranjang data yang terupdate
+     for (int i = 0; i < size; i++) keranjangOut << arrayData[i];
+     keranjangOut << endl;
+     keranjangOut.close();
 
-     data.close();
-     keranjang.close();
-
-     tampilkan();
 }
 
 void Kasir::hapus()
-{    
-     ifstream keranjang("keranjang.txt");
+{   
      ofstream temp("temp.txt", ios::app);
+     ifstream keranjang("keranjang.txt");
 
-     cout << "masukkan ID barang yang ingin dihapus: ";
-     cin >> id;
-
-     while(getline(keranjang, container))
+     while(getline(keranjang, container))//* print semua isi keranjang.txt ke temp.txt kecuali data yang mau dihapus
      {
-          if((pos = container.find(id)) == string::npos) temp << endl << container;
+          if((pos = container.find(id)) == string::npos) temp << container << endl;
           else continue;
      }   
-
-     keranjang.close();
+     
      temp.close();
+     keranjang.close();
+
      remove("keranjang.txt");
      rename("temp.txt", "keranjang.txt");
 
-     tampilkan();
-     //TODO: pengondisian ketika gagal dibuka
+     // if(remove("keranjang.txt") != 0) {perror ("Gagal menghapus file keranjang.txt"); return;}
+     // else {rename("temp.txt", "keranjang.txt");cout<<"Keranjang berhasil dihapus dan direname"; return;}
+
 }
 
 void Kasir::filter()
 {
-     cout << "Filter Berdasarkan: " << endl;
-     cout << "1. Barang" << endl << "2. Makanan" << endl << "3. Pakaian" << endl;
-     cout << "Pilihan: ";
-     cin >> pilihan;
-     if (pilihan == 1) pilihan = 'b'; 
-     if (pilihan == 2) pilihan = 'm';
-     if (pilihan == 3) pilihan = 'p';
-     
-     ifstream data("database.txt");
-
      system("cls");
 
+     ifstream data("database.txt");
      head();
      while (getline(data, container))
      {
-          for (int i = 0; ((pos = container.find('|')) != string::npos); i++)
-          {
-               arrayData[i] = container.substr(0, pos + 1);
-               container.erase(0, pos + 1);
-          }
-
-          container = arrayData[0]; //* mengubah elemen menjadi array
-          if (container[0] == pilihan) cout << '|' << setfill(' ') << setw(w1) << arrayData[0] 
+          parse();
+          container = arrayData[0]; //* mengubah elemen (cth: "lost") menjadi array ('l', 'o', 's', 't') 
+          if (container[0] == pilihan) cout << '|' << setfill(' ') << setw(w1) << arrayData[0] //* kalau huruf awal id = pilihan, dia diprint
                                                                    << setw(w2) << arrayData[1] 
                                                                    << setw(w2) << arrayData[2] << endl;
      }
@@ -201,12 +278,12 @@ void Kasir::filter()
 void Kasir::checkout()
 {
      system ("cls");
-     ifstream keranjang("keranjang.txt");
 
      jumlah = 0; //! butuh perbaikan
      cout << '+' << setfill('-') << setw (w1 + w2*2) << '+' << endl;
      cout << '|' << setfill(' ') << setw(w1) << "<--  (1)|" << setw (w2*2) << "Detil Pesanan|" << endl;
 
+     ifstream keranjang("keranjang.txt");
      head();
      while(getline(keranjang, container))
      {
@@ -214,8 +291,9 @@ void Kasir::checkout()
           cout << '|' << setfill(' ') << setw(w1) << arrayData[0]
                                       << setw(w2) << arrayData[1]
                                       << setw(w2) << 'x' + arrayData[3] +  "       " + arrayData[2] << endl; //! butuh perbaikan
-          jumlah = jumlah + cast(arrayData[3]);
+          jumlah = jumlah + to_int(arrayData[3]);
      }
+     keranjang.close();
 
      cout << '|' << setfill(' ') << setw(w1+w2) << "Total|" << setw(w2) << to_string(jumlah) + '|' << endl;
      cout << '+' << setfill('-') << setw (w1 + w2*2) << '+' << endl;
@@ -229,7 +307,7 @@ void Kasir::checkout()
      cout << '|' << setw (w1 + w2*2) << "|" << endl;  
      cout << '+' << setfill('-') << setw (w1 + w2*2) << '+' << endl;
 
-     cout << "Total: " << jumlah; 
+     cout << "Total: " << jumlah; //*Debugger sementara
          
      // cout << "\nMasukkan pilihan: ";
      // cin >> pilihan;
@@ -243,7 +321,7 @@ void Kasir::checkout()
 
      if (pilihan == 1)tampilkan();
      else if (pilihan == 2) gantiMetode(); 
-     else if (pilihan == 3)tampilkan ();
+     else if (pilihan == 3)tampilkan (); //* +print struk, +bersihkan isi keranjang.txt
 }
 
 int main()
@@ -253,3 +331,14 @@ int main()
     return 0;
 }
 
+//TODO: jumlah Barang, total harga
+//TODO: Metode Pembayaran
+//TODO: Efisiensi Program
+//TODO: Sorting feature
+//TODO: Fitur Kembali
+//TODO: Struk
+
+//TODO: Coba pakai Try-Catch untuk menangkap error ketika salah menginput nilai
+
+//TODO: Perbaiki looping unlimited ketikka ctrl alt n saat input nilai
+//? jika ada fungsi yang bukan berperan sebagai method
