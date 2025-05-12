@@ -34,6 +34,7 @@ class Kasir
           void setPilihan(char a){pilihan = a;}
           int getPilihan() {return pilihan;}
           void setID(){cin >> id;}
+          string getID() {return id;}
           //*Fungsi
           virtual void head();
           void menu();
@@ -55,10 +56,14 @@ class Keranjang : public Kasir
 {
      protected:
           int jumlah;
-          bool ditemukan;
-          bool statusKeranjang;
+          bool ditemukan; //* status kode fungsi berjalan sesuai fungsionalitas atau tidak
+          bool statusKeranjang; //* status panel keranjang
      public:
-          Keranjang() : Kasir("keranjang.txt"){statusKeranjang = false;}
+          Keranjang() : Kasir("keranjang.txt")
+          {
+               statusKeranjang = false;
+               ditemukan = false;
+          }
           void head() override;
           void tampilkan() override;
           void tambah();
@@ -66,6 +71,7 @@ class Keranjang : public Kasir
           void hapus();
           void setStatusKeranjang(bool status){statusKeranjang = status;}
           bool getStatusKeranjang(){return statusKeranjang;}
+          bool getFlag() {return ditemukan;}
 
 };
 

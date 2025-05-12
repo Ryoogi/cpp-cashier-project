@@ -57,7 +57,7 @@ void Kasir::parse()
 
 void Kasir::tampilkan()
 {
-     system ("cls");
+     system("cls");
      ifstream file(namaFile);
      head();
      while(getline(file, container))
@@ -173,6 +173,8 @@ void Keranjang::tambah()
           keranjang << endl;
           keranjang.close();
      }
+
+     else return;
 }
 
 void Keranjang::kurang()
@@ -187,6 +189,7 @@ void Keranjang::kurang()
      }
      keranjangIn.close();
      parse(); //* setelah data diambil, uraikan jadi array dengan parse
+
 
      cout << "Ada " << arrayData[3] + "\b " << arrayData[1] + "\b " << "didalam keranjang." << endl
           << "Kurangi sebanyak: "; //* minta berapa banyak yang ingin dikurangi
@@ -212,17 +215,23 @@ void Keranjang::kurang()
      for (int i = 0; i < size; i++) keranjangOut << arrayData[i];
      keranjangOut << endl;
      keranjangOut.close();
+     
 }
 
 void Keranjang::hapus()
 {
      ofstream temp("temp.txt", ios::app);
      ifstream keranjang("keranjang.txt");
+     ditemukan = false;
 
      while(getline(keranjang, container))//* print semua isi keranjang.txt ke temp.txt kecuali data yang mau dihapus
      {
           if((pos = container.find(id)) == string::npos) temp << container << endl;
-          else continue;
+          else 
+          {
+               ditemukan = true;
+               continue;
+          }
      }   
      
      temp.close();
@@ -292,8 +301,19 @@ void Transaksi::checkout()
           cin >> pilihan;
      }
 
-     if (pilihan == 1)tampilkan();
-     else if (pilihan == 2) gantiMetode(); 
-     else if (pilihan == 3)tampilkan (); //* +print struk, +bersihkan isi keranjang.txt
+     switch (pilihan)
+     {
+     case 1:
+          tampilkan();
+          break;
+     case 2:
+          gantiMetode();
+          break;
+     case 3:
+          ofstream keranjang("keranjang.txt", ios::trunc);
+          keranjang.close();
+          tampilkan();
+          break;
+     }
 }
 
